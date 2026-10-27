@@ -3,6 +3,7 @@
 使用 Pydantic Settings 管理配置
 """
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
 from pathlib import Path
 
 
@@ -25,8 +26,15 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite+aiosqlite:///{BASE_DIR}/data/team_manage.db"
 
     # 安全配置
-    secret_key: str = "your-secret-key-here-change-in-production"
-    admin_password: str = "admin123"
+    secret_key: str = Field(min_length=32)
+    admin_password: str = Field(min_length=12)
+
+    @field_validator("secret_key")
+    @classmethod
+    def reject_example_secret(cls, value: str) -> str:
+        if value == "your-secret-key-here-change-in-production":
+            raise ValueError("SECRET_KEY must be your own random value, not the example")
+        return value
 
     # 日志配置
     log_level: str = "INFO"
